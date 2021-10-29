@@ -18,6 +18,10 @@ scikit-image==0.18.3
 torch_optimizer==0.1.0
 torch-tools==0.1.5
 
+#3words
+boto3
+gitpython
+
 # diffvg
 cmake==3.21.3
 cssutils==2.3.0

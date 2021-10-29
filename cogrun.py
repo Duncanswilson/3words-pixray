@@ -6,6 +6,9 @@ import yaml
 import pathlib
 import os
 import yaml
+import boto3
+from git import Repo
+from git import Git
 
 # https://stackoverflow.com/a/6587648/1010653
 import tempfile, shutil
@@ -20,11 +23,27 @@ class BasePixrayPredictor(cog.Predictor):
     def setup(self):
         print("---> BasePixrayPredictor Setup")
         os.environ['TORCH_HOME'] = 'models/'
+        
+
+        # get the private key for the backend datastore
+        ssm = boto3.client('ssm')
+        parameter = ssm.get_parameter(Name='/github/g4_key')
+        backend_private_key = parameter['Parameter']['Value']
+
+        with open('g4_key', 'w') as outfile:
+            outfile.write(private_key)
+        os.chmod('g4_key', 0o600)
+        git_ssh_identity_file = os.path.expanduser('g4_key')
+        git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
+        if not exists(pixelNFTbackend):
+            with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+                 Repo.clone_from('git@github.com:Duncanswilson/3words_test.git', '3words_test/', branch='main')
 
     # Define the input types for a prediction
     @cog.input("settings", type=str, help="Default settings to use")
+    @cog.input("tokenID", type=str, help="TokenID")
     @cog.input("prompts", type=str, help="Text Prompts")
-    def predict(self, settings, **kwargs):
+    def predict(self, settings, tokenID, **kwargs):
         """Run a single prediction on the model"""
         print("---> BasePixrayPredictor Predict")
         os.environ['TORCH_HOME'] = 'models/'
@@ -40,13 +59,22 @@ class BasePixrayPredictor(cog.Predictor):
         pixray.add_settings(**base_settings)
         pixray.add_settings(**kwargs)
         pixray.add_settings(skip_args=True)
+        #add name to output here 
         settings = pixray.apply_settings()
         pixray.do_init(settings)
         run_complete = False
+        counter = 0 
         while run_complete == False:
             run_complete = pixray.do_run(settings, return_display=True)
             temp_copy = create_temporary_copy(settings.output)
             yield pathlib.Path(os.path.realpath(temp_copy))
+            os.system("cp {}.png 3words_test/{}.png".format(tokenID, tokenID))
+            os.system("cd 3words_test")
+            os.system("git add {}.png".format(tokenID))
+            os.system("git commit -m 'adding iteration {} of tokenID {}'".format(counter, tokenID))
+            os.system("git push origin main")
+            os.system("cd ..")
+            count += 1
 
 class PixrayVqgan(BasePixrayPredictor):
     @cog.input("prompts", type=str, help="text prompt", default="rainbow mountain")
@@ -58,9 +86,11 @@ class PixrayVqgan(BasePixrayPredictor):
         yield from super().predict(settings="pixray_vqgan", **kwargs)
 
 class PixrayPixel(BasePixrayPredictor):
+    
     @cog.input("prompts", type=str, help="text prompt", default="Beirut Skyline. #pixelart")
-    @cog.input("aspect", type=str, help="wide vs square", default="widescreen", options=["widescreen", "square"])
+    @cog.input("aspect", type=str, help="wide vs square", default="square", options=["widescreen", "square"])
     @cog.input("drawer", type=str, help="render engine", default="pixel", options=["pixel", "vqgan", "line_sketch", "clipdraw"])
+    @cog.input("tokenID", type=str, help="tokenID generating prompt", default="0")
     def predict(self, **kwargs):
         yield from super().predict(settings="pixray_pixel", **kwargs)
 
@@ -84,4 +114,3 @@ class PixrayRaw(BasePixrayPredictor):
     def predict(self, prompts, settings):
         ydict = yaml.safe_load(settings)
         yield from super().predict(settings="pixrayraw", prompts=prompts, **ydict)
-
