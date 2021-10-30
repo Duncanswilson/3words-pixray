@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #make sure docker is loaded
 docker -v
 
