@@ -1,0 +1,11 @@
+{"description": "3words Metadata Standard v1",
+"external_url": "https://3wordsproject.com",
+"image": "https://3wordsproject.com/image/1.png",
+"name": "bush did 9/11",
+"attributes":[
+ {"trait_type":"perplexity","value": 0.1},
+ {"trait_type":"phraseId","value": "blah, blah"},
+ {"trait_type":"word1","value": "bush"},
+ {"trait_type":"word2","value": "did"},
+ {"trait_type":"word3","value": "9/11"},
+ {"trait_type":"rerolls": 0}]}
