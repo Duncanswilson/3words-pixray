@@ -9,5 +9,4 @@ then
   sudo chmod +x /usr/local/bin/cog
 fi
 prompt = "$2 $3 $4"
-cog run python pixray.py --drawer=pixel --prompt prompt --output $1.png
-sudo poweroff
+tmux new-session -d -s my_session 'cog run python pixray.py --drawer=pixel --prompt prompt --output $1.png && sudo poweroff'
