@@ -119,7 +119,7 @@ class JSONifiedState():
             return f"{block_number}-{txhash}-{log_index}"
 
 def perplexity(prompt):
-    tokens_tensor = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")    
+    tokens_tensor = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
     loss=model(tokens_tensor, labels=tokens_tensor)[0]
     return np.exp(loss.cpu().detach().numpy())
 
@@ -132,63 +132,69 @@ def create_temporary_copy(src_path):
     shutil.copy2(src_path, temp_path)
     return temp_path
 
-# def metadata_helper(prompt):
-#     #get ssh get out of ssm
-#     #get the private key for the backend datastore
-#     ssm = boto3.client('ssm')
-#     parameter = ssm.get_parameter(Name='/github/id_rsa')
-#     backend_private_key = parameter['Parameter']['Value']
-#     #pull down the "backend" from github
-#     with open('id_rsa', 'w') as outfile:
-#         outfile.write(private_key)
-#     os.chmod('id_rsa', 0o600)
-#     git_ssh_identity_file = os.path.expanduser('id_rsa')
-#     git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
-#     if not exists(pixelNFTbackend):
-#         with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
-#              Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
-# 
-#     #load the state dict for blockhain recording
-#     state = JSONifiedState()
-#     if exists("state.json"):
-#         state.restore("state.json")
-#     #load the last_state for comparison
-#     #COME BACK TO THIS 
-#     # last_state = JSONifiedState()
-#     # if exists("last_state.json"):
-#     #     state.restore("last_state.json")
-#     #save state as last_state 
-#     #calculate new number of rerolls 
-# 
-#     #compute the perplexity
-#     score = perplexity(prompt)
-# 
-#     #create and upload the metadata
-# 
-#     {"description": "3words Metadata Standard v1",
-#     "external_url": "https://3wordsproject.com",
-#     "image": "https://3wordsproject.com/image/{}.png".format(tokenID),
-#     "name": prompt,
-#     "attributes":[
-#      {"trait_type":"perplexity","value": score},
-#      {"trait_type":"phraseId","value": phraseId},
-#      {"trait_type":"word1","value": word1},
-#      {"trait_type":"word2","value": word2},
-#      {"trait_type":"word3","value": word3},
-#      {"trait_type":"rerolls":}]}
+def metadata_helper(prompt):
+    #get ssh get out of ssm
+    #get the private key for the backend datastore
+    ssm = boto3.client('ssm')
+    parameter = ssm.get_parameter(Name='/github/id_rsa')
+    backend_private_key = parameter['Parameter']['Value']
+    #pull down the "backend" from github
+    with open('id_rsa', 'w') as outfile:
+        outfile.write(private_key)
+    os.chmod('id_rsa', 0o600)
+    git_ssh_identity_file = os.path.expanduser('id_rsa')
+    git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
+    if not exists(pixelNFTbackend):
+        with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+             Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
+
+    #load the state dict for blockhain recording
+    os.system("cd pixelNFTbackend")
+    state = JSONifiedState()
+    state.restore("state.json")
+    #load the last_state for comparison
+    #COME BACK TO THIS
+    # last_state = JSONifiedState()
+    # if exists("last_state.json"):
+    #     state.restore("last_state.json")
+    #save state as last_state
+    #calculate new number of rerolls
+
+    #compute the perplexity
+    score = perplexity(prompt)
+
+    #create and upload the metadata
+
+    metadata = {"description": "3words Metadata Standard v1",
+                "external_url": "http://duncanscottwilson.com/3words-pixray/",
+                "image": "http://duncanscottwilson.com/3words-pixray/image/{}.png".format(tokenID),
+                "name": prompt,
+                "attributes":[
+                 {"trait_type":"perplexity","value": score},
+                 {"trait_type":"phraseId","value": phraseId},
+                 {"trait_type":"word1","value": word1},
+                 {"trait_type":"word2","value": word2},
+                 {"trait_type":"word3","value": word3},
+                 {"trait_type":"rerolls": None}]} #implement the re-roll counter
+    os.system('cd ../metadata')
+
+    json.dump(metadata, '{}.json'.format(tokenID))
+    os.system("git add {}.json".format(tokenID))
+    os.system("git commit -m 'added metadata for {}'".format(tokenID))
+    os.system("git push origin master".format(tokenID))
 
 
 class BasePixrayPredictor(cog.Predictor):
     def setup(self):
         print("---> BasePixrayPredictor Setup")
         os.environ['TORCH_HOME'] = 'models/'
-        
+
 
         # SWAP THIS OUT FOR: the private key for the public datastore eventually
         # ssm = boto3.client('ssm')
         # parameter = ssm.get_parameter(Name='/github/g4_key')
         # backend_private_key = parameter['Parameter']['Value']
-        # 
+        #
         # with open('g4_key', 'w') as outfile:
         #     outfile.write(private_key)
         # os.chmod('g4_key', 0o600)
@@ -204,10 +210,10 @@ class BasePixrayPredictor(cog.Predictor):
     @cog.input("prompts", type=str, help="Text Prompts")
     def predict(self, settings, tokenID, **kwargs):
         """Run a single prediction on the model"""
-        
-        
+
+
         #in a subprocess kick off metadata_helper
-        
+
         print("---> BasePixrayPredictor Predict")
         os.environ['TORCH_HOME'] = 'models/'
         settings_file = f"cogs/{settings}.yaml"
@@ -222,11 +228,11 @@ class BasePixrayPredictor(cog.Predictor):
         pixray.add_settings(**base_settings)
         pixray.add_settings(**kwargs)
         pixray.add_settings(skip_args=True)
-        #add name to output here 
+        #add name to output here
         settings = pixray.apply_settings()
         pixray.do_init(settings)
         run_complete = False
-        counter = 0 
+        counter = 0
         while run_complete == False:
             run_complete = pixray.do_run(settings, return_display=True)
             temp_copy = create_temporary_copy(settings.output)
@@ -247,7 +253,7 @@ class PixrayVqgan(BasePixrayPredictor):
         yield from super().predict(settings="pixray_vqgan", **kwargs)
 
 class PixrayPixel(BasePixrayPredictor):
-    
+
     @cog.input("prompts", type=str, help="text prompt", default="Beirut Skyline. #pixelart")
     @cog.input("aspect", type=str, help="wide vs square", default="square", options=["widescreen", "square"])
     @cog.input("drawer", type=str, help="render engine", default="pixel", options=["pixel", "vqgan", "line_sketch", "clipdraw"])
