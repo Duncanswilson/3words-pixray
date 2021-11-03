@@ -1,6 +1,6 @@
 {"description": "3words Metadata Standard v1",
 "external_url": "https://3wordsproject.com",
-"image": "https://3wordsproject.com/image/1.png",
+"image": "http://duncanscottwilson.com/3words-pixray/image/1.png",
 "name": "bush did 9/11",
 "attributes":[
  {"trait_type":"perplexity","value": 0.1},
