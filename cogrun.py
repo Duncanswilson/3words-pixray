@@ -119,7 +119,7 @@ class JSONifiedState():
             return f"{block_number}-{txhash}-{log_index}"
 
 def perplexity(prompt):
-    tokens_tensor = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")    
+    tokens_tensor = tokenizer.encode(prompt, add_special_tokens=False, return_tensors="pt")
     loss=model(tokens_tensor, labels=tokens_tensor)[0]
     return np.exp(loss.cpu().detach().numpy())
 
@@ -159,9 +159,10 @@ def metadata_helper(tokenID, prompt):
     score = perplexity(prompt)
 
     #create and upload the metadata
+
     metadata = {"description": "3words Metadata Standard v1",
-                "external_url": "https://3wordsproject.com",
-                "image": "https://3wordsproject.com/image/{}.png".format(tokenID),
+                "external_url": "http://duncanscottwilson.com/3words-pixray/",
+                "image": "http://duncanscottwilson.com/3words-pixray/image/{}.png".format(tokenID),
                 "name": prompt,
                 "attributes":[
                  {"trait_type":"perplexity","value": score},
@@ -182,13 +183,13 @@ class BasePixrayPredictor(cog.Predictor):
     def setup(self):
         print("---> BasePixrayPredictor Setup")
         os.environ['TORCH_HOME'] = 'models/'
-        
+
 
         # SWAP THIS OUT FOR: the private key for the public datastore eventually
         # ssm = boto3.client('ssm')
         # parameter = ssm.get_parameter(Name='/github/g4_key')
         # backend_private_key = parameter['Parameter']['Value']
-        # 
+        #
         # with open('g4_key', 'w') as outfile:
         #     outfile.write(private_key)
         # os.chmod('g4_key', 0o600)
@@ -226,11 +227,11 @@ class BasePixrayPredictor(cog.Predictor):
         pixray.add_settings(**base_settings)
         pixray.add_settings(**kwargs)
         pixray.add_settings(skip_args=True)
-        #add name to output here 
+        #add name to output here
         settings = pixray.apply_settings()
         pixray.do_init(settings)
         run_complete = False
-        counter = 0 
+        counter = 0
         while run_complete == False:
             run_complete = pixray.do_run(settings, return_display=True)
             temp_copy = create_temporary_copy(settings.output)
@@ -251,7 +252,7 @@ class PixrayVqgan(BasePixrayPredictor):
         yield from super().predict(settings="pixray_vqgan", **kwargs)
 
 class PixrayPixel(BasePixrayPredictor):
-    
+
     @cog.input("prompts", type=str, help="text prompt", default="Beirut Skyline. #pixelart")
     @cog.input("aspect", type=str, help="wide vs square", default="square", options=["widescreen", "square"])
     @cog.input("drawer", type=str, help="render engine", default="pixel", options=["pixel", "vqgan", "line_sketch", "clipdraw"])
