@@ -132,51 +132,51 @@ def create_temporary_copy(src_path):
     shutil.copy2(src_path, temp_path)
     return temp_path
 
-# def metadata_helper(prompt):
-#     #get ssh get out of ssm
-#     #get the private key for the backend datastore
-#     ssm = boto3.client('ssm')
-#     parameter = ssm.get_parameter(Name='/github/id_rsa')
-#     backend_private_key = parameter['Parameter']['Value']
-#     #pull down the "backend" from github
-#     with open('id_rsa', 'w') as outfile:
-#         outfile.write(private_key)
-#     os.chmod('id_rsa', 0o600)
-#     git_ssh_identity_file = os.path.expanduser('id_rsa')
-#     git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
-#     if not exists(pixelNFTbackend):
-#         with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
-#              Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
-# 
-#     #load the state dict for blockhain recording
-#     state = JSONifiedState()
-#     if exists("state.json"):
-#         state.restore("state.json")
-#     #load the last_state for comparison
-#     #COME BACK TO THIS 
-#     # last_state = JSONifiedState()
-#     # if exists("last_state.json"):
-#     #     state.restore("last_state.json")
-#     #save state as last_state 
-#     #calculate new number of rerolls 
-# 
-#     #compute the perplexity
-#     score = perplexity(prompt)
-# 
-#     #create and upload the metadata
-# 
-#     {"description": "3words Metadata Standard v1",
-#     "external_url": "https://3wordsproject.com",
-#     "image": "https://3wordsproject.com/image/{}.png".format(tokenID),
-#     "name": prompt,
-#     "attributes":[
-#      {"trait_type":"perplexity","value": score},
-#      {"trait_type":"phraseId","value": phraseId},
-#      {"trait_type":"word1","value": word1},
-#      {"trait_type":"word2","value": word2},
-#      {"trait_type":"word3","value": word3},
-#      {"trait_type":"rerolls":}]}
+def metadata_helper(tokenID, prompt):
+    #get ssh get out of ssm
+    #get the private key for the backend datastore
+    ssm = boto3.client('ssm')
+    parameter = ssm.get_parameter(Name='/github/id_rsa')
+    backend_private_key = parameter['Parameter']['Value']
+    #pull down the "backend" from github
+    with open('id_rsa', 'w') as outfile:
+        outfile.write(private_key)
+    os.chmod('id_rsa', 0o600)
+    git_ssh_identity_file = os.path.expanduser('id_rsa')
+    git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
+    if not exists(pixelNFTbackend):
+        with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
+             Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
 
+    #reroll log loading
+    reroll_log = json.loads(open('reroll_log.json'))
+    num_rerolls = len(reroll_log[tokenID])
+    num_inplace = 0
+    for reroll in reroll_log[tokenID]:
+        if reroll['_word1'] == word1 and reroll['_word2'] == word2 and reroll['_word3'] == word3:
+            num_inplace +=1 
+    #compute the perplexity
+    score = perplexity(prompt)
+
+    #create and upload the metadata
+    metadata = {"description": "3words Metadata Standard v1",
+                "external_url": "https://3wordsproject.com",
+                "image": "https://3wordsproject.com/image/{}.png".format(tokenID),
+                "name": prompt,
+                "attributes":[
+                 {"trait_type":"perplexity","value": score},
+                 {"trait_type":"phraseId","value": phraseId},
+                 {"trait_type":"word1","value": word1},
+                 {"trait_type":"word2","value": word2},
+                 {"trait_type":"word3","value": word3},
+                 {"trait_type":"generation","value": '{}.{}'.format(num_rerolls, num_inplace)}]}
+
+    os.system("cd metadata/")
+    with open('{}.json'.format(tokenID) "wt") as f:
+        json.dump(metadata, f)     
+    os.system("git add {}.json".format(tokenID))
+    os.system("git commit -m 'add the metadata for {} generation {}.{}'".format(tokenID, num_rerolls, num_inplace))
+    os.system("git push origin master")
 
 class BasePixrayPredictor(cog.Predictor):
     def setup(self):
@@ -205,8 +205,12 @@ class BasePixrayPredictor(cog.Predictor):
     def predict(self, settings, tokenID, **kwargs):
         """Run a single prediction on the model"""
         
-        
+        print("---> Kicking off Metadata Helper Func")
+
         #in a subprocess kick off metadata_helper
+        th = threading.Thread(target=metadata_helper)
+        th.start(tokenID, prompts)
+        
         
         print("---> BasePixrayPredictor Predict")
         os.environ['TORCH_HOME'] = 'models/'
