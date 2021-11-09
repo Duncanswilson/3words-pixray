@@ -1423,6 +1423,10 @@ def setup_parser(vq_parser):
     vq_parser.add_argument("-est",  "--smoothness_type", type=str, help="enforce smoothness type: default/clipped/log", default='default', dest='smoothness_type')
     vq_parser.add_argument("-sat",  "--saturation", type=float, help="encourage saturation, 0 -- skip", default=0, dest='saturation')
 
+    vq_parser.add_argument("--tokenID", type=int, help="")
+    vq_parser.add_argument("--word1", type=str, help="")
+    vq_parser.add_argument("--word2", type=str, help="")
+    vq_parser.add_argument("--word3", type=str, help="")
     return vq_parser
 
 def process_args(vq_parser, namespace=None):

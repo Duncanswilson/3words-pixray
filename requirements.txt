@@ -22,6 +22,8 @@ torch-tools==0.1.5
 boto3
 gitpython
 transformers
+urllib3
+sh
 
 # diffvg
 cmake==3.21.3
