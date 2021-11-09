@@ -6,6 +6,7 @@ from transformers import BertLMHeadModel, BertTokenizerFast
 import threading
 import os
 import pixray
+import json
 
 def metadata_helper(tokenID, prompt, num_rerolls, num_inplace):
     #get ssh get out of ssm
@@ -44,23 +45,12 @@ parser.add_argument("--prompt", type=str, help="")
 args = parser.parse_args()
 
 
-ssm = boto3.client('ssm', region_name='us-east-1')
-parameter = ssm.get_parameter(Name='id_rsa')
-backend_private_key = parameter['Parameter']['Value']
+s3 = boto3.client('s3', region_name='us-east-1')
+s3.download_file('reroll-app', 'reroll_log.json', 'reroll_log.json')
+reroll_log = json.load(open("reroll_log.json", "rt"))
 
-with open('id_rsa', 'w') as outfile:
-    outfile.write(backend_private_key)
-os.chmod('id_rsa', 0o600)
-git_ssh_identity_file = os.path.expanduser('id_rsa')
-git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
-if not os.path.exists('pixelNFTbackend'):
-    with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
-         Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
 
-#reroll log loading
-os.system("cd pixelNFTbackend")
-reroll_log = json.loads(open('reroll_log.json'))
-os.system("cd ..")
+
 num_rerolls = len(reroll_log[args.tokenID])
 num_inplace = 0
 for reroll in reroll_log[args.tokenID]:
