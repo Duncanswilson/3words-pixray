@@ -5,4 +5,5 @@ sudo curl -o /usr/local/bin/cog -L https://github.com/replicate/cog/releases/lat
   sudo chmod +x /usr/local/bin/cog
 
 prompt="$2 $3 $4"
-tmux new-session -d -s my_session 'cog run python pixray.py --drawer=pixel --prompt prompt --output $1.png && sudo poweroff'
+filename="$1.png"
+tmux new-session -d -s my_session "cog run python pixray.py --drawer=pixel --prompt $prompt --output $filename  2>&1 | tee log.txt  && sudo poweroff"
