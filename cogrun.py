@@ -10,12 +10,12 @@ import boto3
 from git import Repo
 from git import Git
 from transformers import BertLMHeadModel, BertTokenizerFast
-
+import threading
 
 device = 'cuda'
-model_id = 'bert'
-model = GPT2LMHeadModel.from_pretrained(model_id).to(device)
-tokenizer = GPT2TokenizerFast.from_pretrained(model_id)
+model_id = 'bert-large-cased'
+model = BertLMHeadModel.from_pretrained(model_id).to(device)
+tokenizer = BertTokenizerFast.from_pretrained(model_id)
 
 class JSONifiedState():
         """Store the state of scanned blocks and all events.
@@ -173,7 +173,7 @@ def metadata_helper(tokenID, prompt):
                  {"trait_type":"generation","value": '{}.{}'.format(num_rerolls, num_inplace)}]}
 
     os.system("cd metadata/")
-    with open('{}.json'.format(tokenID) "wt") as f:
+    with open('{}.json'.format(tokenID), "wt") as f:
         json.dump(metadata, f)     
     os.system("git add {}.json".format(tokenID))
     os.system("git commit -m 'add the metadata for {} generation {}.{}'".format(tokenID, num_rerolls, num_inplace))
@@ -203,14 +203,14 @@ class BasePixrayPredictor(cog.Predictor):
     @cog.input("settings", type=str, help="Default settings to use")
     @cog.input("tokenID", type=str, help="TokenID")
     @cog.input("prompts", type=str, help="Text Prompts")
-    def predict(self, settings, tokenID, **kwargs):
+    def predict(self, settings, tokenID, prompts, **kwargs):
         """Run a single prediction on the model"""
         
         print("---> Kicking off Metadata Helper Func")
 
         #in a subprocess kick off metadata_helper
-        th = threading.Thread(target=metadata_helper)
-        th.start(tokenID, prompts)
+        th = threading.Thread(target=metadata_helper, args=(tokenID, prompts))
+        th.start()
         
         
         print("---> BasePixrayPredictor Predict")
@@ -224,10 +224,14 @@ class BasePixrayPredictor(cog.Predictor):
               sys.exit(1)
 
         pixray.reset_settings()
-        pixray.add_settings(**base_settings)
-        pixray.add_settings(**kwargs)
-        pixray.add_settings(skip_args=True)
-        #add name to output here
+        #pixray.add_settings(**base_settings)
+        #pixray.add_settings(**kwargs)
+        pixray.add_settings(quality="better", scale=2.5, aspect='square')
+        real_prompt = "a clear image of " + prompts + ". #pixelart"
+        pixray.add_settings(prompts=real_prompt)
+        #pixray.add_settings(skip_args=True)
+	#add name to output here
+        pixray.add_settings(output= (tokenID+".png"))
         settings = pixray.apply_settings()
         pixray.do_init(settings)
         run_complete = False
