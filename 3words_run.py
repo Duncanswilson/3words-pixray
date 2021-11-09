@@ -41,16 +41,19 @@ def metadata_helper(tokenID, prompt, num_rerolls, num_inplace):
 parser = argparse.ArgumentParser(description='blah')
 parser.add_argument("--tokenID", type=int, help="")
 parser.add_argument("--prompt", type=str, help="")
-args = vq_parser.parse_args()
+args = parser.parse_args()
 
 
-#pull down the "backend" from github
+ssm = boto3.client('ssm', region_name='us-east-1')
+parameter = ssm.get_parameter(Name='id_rsa')
+backend_private_key = parameter['Parameter']['Value']
+
 with open('id_rsa', 'w') as outfile:
-    outfile.write(private_key)
+    outfile.write(backend_private_key)
 os.chmod('id_rsa', 0o600)
 git_ssh_identity_file = os.path.expanduser('id_rsa')
 git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
-if not exists(pixelNFTbackend):
+if not os.path.exists('pixelNFTbackend'):
     with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
          Repo.clone_from('git@github.com:Duncanswilson/pixelNFTbackend.git', 'pixelNFTbackend/', branch='main')
 
@@ -88,8 +91,8 @@ run_complete = False
 counter = 0
 while run_complete == False:
     run_complete = pixray.do_run(settings, return_display=True)
-    temp_copy = create_temporary_copy(settings.output)
-    yield pathlib.Path(os.path.realpath(temp_copy))
+    #temp_copy = create_temporary_copy(settings.output)
+    #yield pathlib.Path(os.path.realpath(temp_copy))
     os.system("cp {}.png images/{}.png".format(tokenID, tokenID))
     os.system("git add images/{}.png".format(tokenID))
     os.system("git commit -m 'adding iteration {} of tokenID {}'".format(counter, tokenID))
