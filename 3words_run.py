@@ -46,6 +46,8 @@ args = parser.parse_args()
 
 
 s3 = boto3.client('s3', region_name='us-east-1')
+s3.download_file('reroll-app', 'queue.json', 'queue.json')
+
 s3.download_file('reroll-app', 'reroll_log.json', 'reroll_log.json')
 reroll_log = json.load(open("reroll_log.json", "rt"))
 
