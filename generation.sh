@@ -2,9 +2,9 @@
 
 cog run python 3words_run.py --tokenID $1 --word1 $2 --word2 $3 --word3 $4
 
-mv $1.json metadata/$1.json
+mv -f $1.json metadata/$1.json
 
-mv $1.png image/$.png
+mv -f $1.png image/$1.png
 sudo chmod -R 777 .git/objects
 git add metadata/$1.json
 git add image/$1.png
