@@ -1,0 +1,4 @@
+{"description":"3words Metadata Standard v1","external_url": "https://3wordsproject.com",
+"image": "https://duncanswilson.github.io/3words-pixray/image/2.png",
+"name":"lucy sky diamonds","attributes":[{"trait_type":"perplexity","value":9825.56},{"trait_type":"phraseId","value":"0xa77402db9e5b9a8a55eda62d8da41bca2b5748b9decdeba6ee70be004f783604"},{"trait_type":"word1","value":"lucy"},{"trait_type":"word2","value":"sky"},{"trait_type":"word3","value":"diamonds"},
+  {"trait_type":"generation", "value": 0.0}]}
