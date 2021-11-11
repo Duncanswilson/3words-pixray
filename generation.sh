@@ -1,4 +1,5 @@
 #!/bin/bash
+git reset --hard origin/master
 
 cog run python 3words_run.py --tokenID $1 --word1 $2 --word2 $3 --word3 $4
 
