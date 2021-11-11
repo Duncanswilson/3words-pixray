@@ -1428,7 +1428,7 @@ def setup_parser(vq_parser):
     vq_parser.add_argument("--word2", type=str, help="")
     vq_parser.add_argument("--word3", type=str, help="")
 
-    vq_parser.add_argument("--num_reroll", type=str, help="")
+    vq_parser.add_argument("--num_rerolls", type=str, help="")
     vq_parser.add_argument("--num_inplace", type=str, help="")
     return vq_parser
 
