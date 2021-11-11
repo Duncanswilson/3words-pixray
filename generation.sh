@@ -14,4 +14,4 @@ git add metadata-history/*.json
 git commit -m "uploading new re-roll data for tokenID: $1"
 git push origin master 
 
-#sudo poweroff
+sudo poweroff
