@@ -1,7 +1,7 @@
 #!/bin/bash
 git reset --hard origin/master
 
-cog run python 3words_run.py --tokenID $1 --word1 $2 --word2 $3 --word3 $4
+cog run python 3words_run.py --tokenID $1 --word1 $2 --word2 $3 --word3 $4 --num_reroll $5 --num_inplace $6
 
 mv -f $1.json metadata/$1.json
 
@@ -14,4 +14,4 @@ git add metadata-history/*.json
 git commit -m "uploading new re-roll data for tokenID: $1"
 git push origin master 
 
-sudo poweroff
+#sudo poweroff

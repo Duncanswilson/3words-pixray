@@ -55,6 +55,9 @@ parser.add_argument("--tokenID", type=int, help="")
 parser.add_argument("--word1", type=str, help="")
 parser.add_argument("--word2", type=str, help="")
 parser.add_argument("--word3", type=str, help="")
+parser.add_argument("--word3", type=str, help="")
+parser.add_argument("--num_rerolls", type=str, help="")
+parser.add_argument("--num_inplace", type=str, help="")
 args = parser.parse_args()
 
 #s3 = boto3.client('s3', region_name='us-east-1')
@@ -62,20 +65,20 @@ args = parser.parse_args()
 
 #s3.download_file('reroll-app', 'reroll_log.json', 'reroll_log.json')
 #reroll_log = json.load(open("reroll_log.json", "rt"))
-os.system("wget https://reroll-app.s3.amazonaws.com/reroll_log.json")
+#os.system("wget https://reroll-app.s3.amazonaws.com/reroll_log.json")
 
-reroll_log = json.loads(open('reroll_log.json').read())
+#reroll_log = json.loads(open('reroll_log.json').read())
 #import pdb; pdb.set_trace()
-num_rerolls = len(reroll_log[str(args.tokenID)])
-num_inplace = 0
-for reroll in reroll_log[str(args.tokenID)]:
-    if reroll['_word1'] == args.word1 and reroll['_word2'] == args.word2 and reroll['_word3'] == args.word3:
-       if reroll['inPlace']:
-           num_inplace +=1 
+#num_rerolls = len(reroll_log[str(args.tokenID)])
+#num_inplace = 0
+#for reroll in reroll_log[str(args.tokenID)]:
+   # if reroll['_word1'] == args.word1 and reroll['_word2'] == args.word2 and reroll['_word3'] == args.word3:
+     #  if reroll['inPlace']:
+      #     num_inplace +=1 
 
 
 #move the old image to the backup folder
-os.system("cp image/{}.png image-history/{}-{}-{}.png".format(args.tokenID, args.tokenID, num_rerolls, num_inplace))
+os.system("cp image/{}.png image-history/{}-{}-{}.png".format(args.tokenID, args.tokenID, args.num_rerolls, args.num_inplace))
 #os.system("git add image-history/{}-{}-{}.png".format( args.tokenID, num_rerolls, num_inplace))
 #os.system("git commit -m 'adding new history of tokenID {}'".format(args.tokenID))
 #os.system("push -u origin master")
@@ -89,7 +92,7 @@ prompt.append(args.word3)
 
 
 
-th = threading.Thread(target=metadata_helper, args=(args.tokenID, prompt, num_rerolls, num_inplace))
+th = threading.Thread(target=metadata_helper, args=(args.tokenID, prompt, args.num_rerolls, args.num_inplace))
 th.start()
 
 pixray.reset_settings()
